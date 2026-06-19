@@ -14,4 +14,8 @@ public class GameHub : Hub
         Console.WriteLine($"Disconnected: {Context.ConnectionId}");
         await base.OnDisconnectedAsync(exception);
     }
+    public async Task JoinGameGroup(Guid gameId)
+    {
+        await Groups.AddToGroupAsync(Context.ConnectionId,gameId.ToString());
+    }
 }

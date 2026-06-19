@@ -1,20 +1,18 @@
 using bakcend.Enums;
 
-namespace backend.Models;
-public class Ship
+public class AddShipDto
 {
-    public Guid Id { get; set; }
-
     public Guid GameId { get; set; }
 
     public Guid PlayerId { get; set; }
+
+    public ShipType ShipType { get; set; }
 
     public int StartX { get; set; }
 
     public int StartY { get; set; }
 
-    public int Length { get; set; }
-
     public bool IsVertical { get; set; }
-    public ShipType ShipType{get;set;}
+
+
 }

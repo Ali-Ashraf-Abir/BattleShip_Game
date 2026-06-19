@@ -11,7 +11,8 @@ public class GameState
     public int GridSize { get; set; }
 
     public Guid CurrentTurnPlayerId { get; set; }
-
+    public bool HostReady{get;set;}
+    public bool OpponentReady{get;set;}
     public GameState(Guid gameId,int gridSize)
     {
         GameId = gameId;
