@@ -4,4 +4,5 @@ using backend.Models;
 public interface IGameService
 {
     Task<Game> CreateGameAsync(Guid hostId,int gridSize);
+    Task<Game> JoinGameAsync(Guid playerId,Guid gameId);
 }

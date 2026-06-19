@@ -14,7 +14,14 @@ public class GameController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Create(CreateGameDto dto)
     {
-        var game =await _gameService.CreateGameAsync(dto.HostId,dto.GridSize);
+        var game = await _gameService.CreateGameAsync(dto.HostId, dto.GridSize);
+        return Ok(game);
+    }
+
+    [HttpPost("join")]
+    public async Task<IActionResult> Join(JoinGameDto data)
+    {
+        var game = await _gameService.JoinGameAsync(data.playerId,data.gameId);
         return Ok(game);
     }
 }
