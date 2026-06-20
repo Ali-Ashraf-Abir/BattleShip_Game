@@ -16,6 +16,11 @@ public class GameHub : Hub
     }
     public async Task JoinGameGroup(Guid gameId)
     {
-        await Groups.AddToGroupAsync(Context.ConnectionId,gameId.ToString());
+        await Groups.AddToGroupAsync(Context.ConnectionId, gameId.ToString());
+    }
+    public async Task LeaveGameGroup(Guid gameId)
+    {
+        await Groups.RemoveFromGroupAsync(Context.ConnectionId,gameId.ToString()
+        );
     }
 }

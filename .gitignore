@@ -1,3 +1,5 @@
 backend/obj
 backend/bin
 .vscode
+frontend/.next
+frontend/node_modules

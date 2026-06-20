@@ -2,12 +2,16 @@
 using backend.Data;
 using backend.Enums;
 using backend.GameEngine;
+using backend.Hubs;
 using backend.Models;
 using backend.Services;
 using backend.Services.Interfaces;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
 
-public class GameService(ApplicationDbContext _db,GameStateManager _gameStateManager) : IGameService
+public class GameService(ApplicationDbContext _db, GameStateManager _gameStateManager, IHubContext<GameHub> _hub) : IGameService
 {
     public async Task<Game> CreateGameAsync(Guid hostId, int gridSize)
     {
@@ -54,8 +58,26 @@ public class GameService(ApplicationDbContext _db,GameStateManager _gameStateMan
 
         _gameStateManager.AddGame(gameState);
         await _db.SaveChangesAsync();
-
+        await _hub.Clients
+                    .Group(gameId.ToString())
+                    .SendAsync(
+                        "PlayerJoined",
+                        new
+                        {
+                            PlayerId = playerId
+                        });
         return game;
+    }
+
+    public async Task<List<Game>> AvailableGames()
+    {
+        var openGames = await _db.Games
+    .Where(g => g.OpponentId == null)
+    .Include(g=>g.Opponent)
+    .Include(g=>g.Host)
+    .ToListAsync();
+
+    return openGames;
     }
 
 

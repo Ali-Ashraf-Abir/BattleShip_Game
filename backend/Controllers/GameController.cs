@@ -24,4 +24,11 @@ public class GameController : ControllerBase
         var game = await _gameService.JoinGameAsync(data.playerId,data.gameId);
         return Ok(game);
     }
+
+    [HttpGet("available-games")]
+        public async Task<IActionResult> GetGames()
+    {
+        var game = await _gameService.AvailableGames();
+        return Ok(game);
+    }
 }
