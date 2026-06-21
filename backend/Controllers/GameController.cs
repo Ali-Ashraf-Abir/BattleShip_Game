@@ -21,14 +21,22 @@ public class GameController : ControllerBase
     [HttpPost("join")]
     public async Task<IActionResult> Join(JoinGameDto data)
     {
-        var game = await _gameService.JoinGameAsync(data.playerId,data.gameId);
+        var game = await _gameService.JoinGameAsync(data.playerId, data.gameId);
         return Ok(game);
     }
 
     [HttpGet("available-games")]
-        public async Task<IActionResult> GetGames()
+    public async Task<IActionResult> GetGames()
     {
         var game = await _gameService.AvailableGames();
+        return Ok(game);
+    }
+
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetGame(Guid id)
+    {
+        var game = await _gameService.GetGameAsync(id);
+        if (game == null) return NotFound();
         return Ok(game);
     }
 }

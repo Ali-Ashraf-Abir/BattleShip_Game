@@ -7,4 +7,5 @@ public interface IGameService
     Task<Game> JoinGameAsync(Guid playerId,Guid gameId);
 
     public Task<List<Game>> AvailableGames();
+    public  Task<Game?> GetGameAsync(Guid gameId);
 }

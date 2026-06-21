@@ -64,6 +64,7 @@ public class GameService(ApplicationDbContext _db, GameStateManager _gameStateMa
                         "PlayerJoined",
                         new
                         {
+                            GameId = gameId,
                             PlayerId = playerId
                         });
         return game;
@@ -73,12 +74,18 @@ public class GameService(ApplicationDbContext _db, GameStateManager _gameStateMa
     {
         var openGames = await _db.Games
     .Where(g => g.OpponentId == null)
-    .Include(g=>g.Opponent)
-    .Include(g=>g.Host)
+    .Include(g => g.Opponent)
+    .Include(g => g.Host)
     .ToListAsync();
 
-    return openGames;
+        return openGames;
     }
-
+    public async Task<Game?> GetGameAsync(Guid gameId)
+    {
+        return await _db.Games
+            .Include(g => g.Host)
+            .Include(g => g.Opponent)
+            .FirstOrDefaultAsync(g => g.Id == gameId);
+    }
 
 }

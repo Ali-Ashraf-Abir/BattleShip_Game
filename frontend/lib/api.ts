@@ -9,7 +9,7 @@ import type {
   ReadyUpDto,
 } from "@/types/api";
 
-export const DEFAULT_BASE_URL = "http://localhost:5000";
+export const DEFAULT_BASE_URL = "http://localhost:5204";
 
 const STORAGE_KEY = "battleship:baseUrl";
 
@@ -165,4 +165,7 @@ export const api = {
 
   readyUp: (dto: ReadyUpDto) =>
     request<void>("POST", "/api/ship/ready", dto),
+  
+  getGame: (gameId: string) =>
+  request<GameModel>("GET", `/api/games/${gameId}`),
 };

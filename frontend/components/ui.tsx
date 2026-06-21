@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 export function Panel({
   title,
@@ -110,4 +110,30 @@ export function SuccessText({ message }: { message: string | null }) {
       {message}
     </p>
   );
+}
+
+
+
+type ToastState = { id: number; message: string } | null;
+
+export function useToast() {
+  const [toast, setToast] = useState<ToastState>(null);
+
+  function showToast(message: string) {
+    setToast({ id: Date.now(), message });
+  }
+
+  useEffect(() => {
+    if (!toast) return;
+    const timer = setTimeout(() => setToast(null), 2500);
+    return () => clearTimeout(timer);
+  }, [toast]);
+
+  const ToastElement = toast ? (
+    <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-md bg-slate-800 px-4 py-2 text-sm text-slate-100 shadow-lg ring-1 ring-slate-700">
+      {toast.message}
+    </div>
+  ) : null;
+
+  return { showToast, ToastElement };
 }

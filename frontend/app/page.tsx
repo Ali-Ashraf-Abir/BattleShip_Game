@@ -26,8 +26,7 @@ export default function Home() {
         <SharedDatalists />
 
         <UserPanel />
-        <GamePanel />
-        <ReadyUpPanel />
+ 
         <RequestLogPanel />
 
         <footer className="pb-6 text-center text-xs text-slate-600">

@@ -2,20 +2,23 @@ using backend.Data;
 using backend.Dtos;
 using backend.Enums;
 using backend.GameEngine;
+using backend.Hubs;
 using backend.Models;
 using backend.Services.Interfaces;
 using bakcend.Enums;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
 namespace backend.Services;
 
-public class ShipService(GameStateManager state, ApplicationDbContext _db) : IShipService
+public class ShipService(
+    GameStateManager state,
+    ApplicationDbContext _db,
+    IHubContext<GameHub> _hub) : IShipService
 {
-    public async Task ReadyUpAsync(
-    ReadyUpDto dto)
+    public async Task ReadyUpAsync(ReadyUpDto dto)
     {
-
-        var existingShips = await _db.Ships.AnyAsync(s =>s.GameId == dto.GameId &&s.PlayerId == dto.PlayerId);
+        var existingShips = await _db.Ships.AnyAsync(s => s.GameId == dto.GameId && s.PlayerId == dto.PlayerId);
         if (existingShips)
         {
             throw new InvalidOperationException("Player has already placed ships");
@@ -45,17 +48,11 @@ public class ShipService(GameStateManager state, ApplicationDbContext _db) : ISh
         }).ToList();
 
         _db.Ships.AddRange(ships);
-        // in production uncomment this
-        // if (!state.TryGetGame(dto.GameId,out var gameState))
-        // {
-        //     throw new InvalidOperationException("Game state not found");
-        // }
 
-        // and remove this in production
-        if (!state.TryGetGame(dto.GameId,out var gameState))
+        if (!state.TryGetGame(dto.GameId, out var gameState))
         {
-            gameState = new GameState(game.Id,game.GridSize);
-            gameState.CurrentTurnPlayerId =game.HostId;
+            gameState = new GameState(game.Id, game.GridSize);
+            gameState.CurrentTurnPlayerId = game.HostId;
 
             state.AddGame(gameState);
         }
@@ -67,13 +64,34 @@ public class ShipService(GameStateManager state, ApplicationDbContext _db) : ISh
         {
             gameState.OpponentReady = true;
         }
-        if (gameState.HostReady &&
-            gameState.OpponentReady)
+
+        var bothReady = gameState.HostReady && gameState.OpponentReady;
+        if (bothReady)
         {
             game.Status = GameStatus.InProgress;
             game.CurrentTurnPlayerId = game.HostId;
         }
+
         await _db.SaveChangesAsync();
+
+        await _hub.Clients
+            .Group(dto.GameId.ToString())
+            .SendAsync("PlayerReady", new
+            {
+                GameId = dto.GameId,
+                PlayerId = dto.PlayerId
+            });
+
+        if (bothReady)
+        {
+            await _hub.Clients
+                .Group(dto.GameId.ToString())
+                .SendAsync("BothPlayersReady", new
+                {
+                    GameId = dto.GameId,
+                    CurrentTurnPlayerId = gameState.CurrentTurnPlayerId
+                });
+        }
     }
     private static void ValidateFleet(
     List<ShipPlacementDto> ships)

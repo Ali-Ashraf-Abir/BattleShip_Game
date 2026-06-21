@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { api, ApiRequestError } from "@/lib/api";
 import { useSessionGames } from "@/lib/session";
+import { joinGameGroup, onPlayerJoined } from "@/lib/gameHub";
 import { GAME_STATUS_LABELS, type GameModel } from "@/types/api";
 import {
   Panel,
@@ -11,10 +13,13 @@ import {
   PrimaryButton,
   CopyableId,
   ErrorText,
+  useToast,
 } from "@/components/ui";
 
 export default function GamePanel() {
+  const router = useRouter();
   const { games, upsertGame, clearGames } = useSessionGames();
+  const { showToast, ToastElement } = useToast();
 
   const [userId, setUserId] = useState<string | null>(null);
 
@@ -49,6 +54,17 @@ export default function GamePanel() {
     loadAvailableGames();
   }, []);
 
+  // Listen for someone joining a game we're hosting, and jump in together.
+useEffect(() => {
+  const unsubscribe = onPlayerJoined(({ gameId }) => {
+    const hostedGame = games.find((g) => g.id === gameId && g.hostId === userId);
+    if (!hostedGame) return;
+    showToast(`A player joined your game — heading to the board…`);
+    setTimeout(() => router.push(`/game/${gameId}`), 800);
+  });
+  return unsubscribe;
+}, [games, userId, router, showToast]);
+
   async function handleCreate() {
     if (!userId) {
       setCreateError("No user found in this browser. Create a user first.");
@@ -59,6 +75,7 @@ export default function GamePanel() {
     try {
       const game = await api.createGame({ hostId: userId, gridSize: Number(gridSize) });
       upsertGame(game);
+      await joinGameGroup(game.id);
       loadAvailableGames();
     } catch (err) {
       setCreateError(err instanceof ApiRequestError ? err.message : "Unexpected error");
@@ -77,10 +94,11 @@ export default function GamePanel() {
     try {
       const game = await api.joinGame({ playerId: userId, gameId });
       upsertGame(game);
-      loadAvailableGames();
+      await joinGameGroup(game.id);
+      showToast("Joined! Heading to the board…");
+      setTimeout(() => router.push(`/game/${game.id}`), 600);
     } catch (err) {
       setJoinError(err instanceof ApiRequestError ? err.message : "Unexpected error");
-    } finally {
       setJoiningGameId(null);
     }
   }
@@ -94,7 +112,9 @@ export default function GamePanel() {
             Host a new game
           </p>
           <Field label="Host (you)">
-            {userId ? (
+            {userId === null ? (
+              <p className="text-xs text-slate-500">Loading…</p>
+            ) : userId ? (
               <CopyableId value={userId} label="you" />
             ) : (
               <p className="text-xs text-amber-400">
@@ -210,6 +230,8 @@ export default function GamePanel() {
           </ul>
         </div>
       )}
+
+      {ToastElement}
     </Panel>
   );
 }
