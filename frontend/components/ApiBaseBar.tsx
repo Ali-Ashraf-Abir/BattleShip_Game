@@ -4,8 +4,6 @@ import { useState } from "react";
 import { getBaseUrl, setBaseUrl } from "@/lib/api";
 
 export default function ApiBaseBar() {
-  // Lazy initializer runs once on mount, after hydration, avoiding the
-  // server/client mismatch without needing a setState-in-effect.
   const [value, setValue] = useState(() => getBaseUrl());
   const [saved, setSaved] = useState(false);
 

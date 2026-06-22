@@ -1,5 +1,3 @@
-// Mirrors backend C# DTOs / models exactly. Keep field names + casing in sync
-// with the .NET backend (System.Text.Json defaults to camelCase on the wire).
 
 export enum ShipType {
   Carrier = 0,
@@ -29,7 +27,7 @@ export enum GameStatus {
   WaitingForPlayer = 0,
   PlacingShips = 1,
   InProgress = 2,
-  // Backend enum may have more members (e.g. Finished) not yet confirmed.
+
 }
 
 export const GAME_STATUS_LABELS: Record<number, string> = {
@@ -38,20 +36,33 @@ export const GAME_STATUS_LABELS: Record<number, string> = {
   [GameStatus.InProgress]: "In progress",
 };
 
-// ---------- Users ----------
 
-// CreateUserDto.cs -> record CreateUserDto(string Name)
 export interface CreateUserDto {
   name: string;
 }
-
-// UserResponseDto.cs -> record UserResponseDto(Guid Id, string DisplayName)
+export type ShipTypeName =
+  | "Carrier"
+  | "Battleship"
+  | "Cruiser"
+  | "Submarine"
+  | "Destroyer";
+ 
+const SHIP_TYPE_NAME_TO_ENUM: Record<ShipTypeName, ShipType> = {
+  Carrier: ShipType.Carrier,
+  Battleship: ShipType.Battleship,
+  Cruiser: ShipType.Cruiser,
+  Submarine: ShipType.Submarine,
+  Destroyer: ShipType.Destroyer,
+};
+export function shipTypeFromApi(value: ShipTypeName): ShipType {
+  return SHIP_TYPE_NAME_TO_ENUM[value];
+}
 export interface UserResponseDto {
   id: string;
   displayName: string;
 }
 
-// User.cs model (not directly returned by any endpoint we have, kept for reference)
+
 export interface UserModel {
   id: string;
   displayName: string;
@@ -60,23 +71,19 @@ export interface UserModel {
   gamesPlayed: number;
 }
 
-// ---------- Games ----------
 
-// GameCreationDto.cs -> record CreateGameDto(Guid HostId, int GridSize)
 export interface CreateGameDto {
   hostId: string;
   gridSize: number;
 }
 
-// JoinGameDto.cs -> class JoinGameDto { Guid playerId; Guid gameId; }
-// NOTE: backend property names are lowercase playerId/gameId (not PascalCase),
-// so the JSON wire format is already camelCase here.
+
 export interface JoinGameDto {
   playerId: string;
   gameId: string;
 }
 
-// Game.cs model, returned by POST /api/games and POST /api/games/join
+
 export interface GameModel {
   id: string;
   hostId: string;
@@ -91,7 +98,7 @@ export interface GameModel {
 
 // ---------- Ships ----------
 
-// ShipPlacementDto.cs
+
 export interface ShipPlacementDto {
   shipType: ShipType;
   startX: number;
@@ -99,15 +106,13 @@ export interface ShipPlacementDto {
   isVertical: boolean;
 }
 
-// ReadyUpDto.cs
 export interface ReadyUpDto {
   gameId: string;
   playerId: string;
   ships: ShipPlacementDto[];
 }
 
-// AddShipDto.cs - currently unused by any controller route we were given,
-// kept here in case an endpoint for it shows up later.
+
 export interface AddShipDto {
   gameId: string;
   playerId: string;
@@ -117,9 +122,64 @@ export interface AddShipDto {
   isVertical: boolean;
 }
 
-// ---------- Generic API error shape ----------
-// Controllers currently return BadRequest(ex.Message) - a raw string, not JSON.
+
 export interface ApiError {
   status: number;
   message: string;
 }
+
+
+export type AttackDto = {
+  gameId: string;
+  attackerId: string;
+  x: number;
+  y: number;
+};
+
+
+export type AttackResultDto = {
+  gameId: string;
+  attackerId: string;
+  x: number;
+  y: number;
+  isHit: boolean;
+  sunkShipType: ShipTypeName | null; 
+  isGameOver: boolean;
+  winnerId: string | null;
+  nextTurnPlayerId: string;
+};
+
+
+export type ShipDto = {
+  shipType: ShipTypeName; 
+  startX: number;
+  startY: number;
+  isVertical: boolean;
+  length: number;
+};
+ 
+export type OpponentShipSummaryDto = {
+  shipType: ShipTypeName; 
+  isSunk: boolean;
+};
+
+
+export type AttackLogDto = {
+  attackerId: string;
+  x: number;
+  y: number;
+  isHit: boolean;
+};
+
+export type GameStateDto = {
+  gameId: string;
+  hostId: string;
+  opponentId: string | null;
+  gridSize: number;
+  status: GameStatus; 
+  currentTurnPlayerId: string | null;
+  winnerId: string | null;
+  myShips: ShipDto[];
+  opponentShipSummary: OpponentShipSummaryDto[];
+  attacks: AttackLogDto[];
+};

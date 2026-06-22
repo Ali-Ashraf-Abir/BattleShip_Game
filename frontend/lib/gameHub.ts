@@ -2,6 +2,7 @@
 
 import * as signalR from "@microsoft/signalr";
 import { getBaseUrl } from "@/lib/api";
+import { ShipTypeName } from "@/types/api";
 
 let connection: signalR.HubConnection | null = null;
 let startPromise: Promise<void> | null = null;
@@ -60,4 +61,54 @@ export function onBothPlayersReady(
   const conn = getConnection();
   conn.on("BothPlayersReady", handler);
   return () => conn.off("BothPlayersReady", handler);
+}
+
+export type AttackResultPayload = {
+  gameId: string;
+  attackerId: string;
+  x: number;
+  y: number;
+  isHit: boolean;
+  sunkShipType: ShipTypeName | null; // was: number | string | null
+  isGameOver: boolean;
+  winnerId: string | null;
+  nextTurnPlayerId: string;
+};
+ 
+export type ShipSunkPayload = {
+  gameId: string;
+  defenderId: string;
+  shipType: ShipTypeName; // was: number | string
+};
+ 
+export function onAttackResult(
+  handler: (payload: AttackResultPayload) => void
+): () => void {
+  const conn = getConnection();
+  conn.on("AttackResult", handler);
+  return () => conn.off("AttackResult", handler);
+}
+ 
+
+ 
+export function onShipSunk(
+  handler: (payload: ShipSunkPayload) => void
+): () => void {
+  const conn = getConnection();
+  conn.on("ShipSunk", handler);
+  return () => conn.off("ShipSunk", handler);
+}
+ 
+export type GameOverPayload = {
+  gameId: string;
+  winnerId: string;
+  loserId: string;
+};
+ 
+export function onGameOver(
+  handler: (payload: GameOverPayload) => void
+): () => void {
+  const conn = getConnection();
+  conn.on("GameOver", handler);
+  return () => conn.off("GameOver", handler);
 }

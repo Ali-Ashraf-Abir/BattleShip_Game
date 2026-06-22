@@ -7,6 +7,9 @@ import type {
   JoinGameDto,
   GameModel,
   ReadyUpDto,
+  AttackDto,
+  AttackResultDto,
+  GameStateDto,
 } from "@/types/api";
 
 export const DEFAULT_BASE_URL = "http://localhost:5204";
@@ -140,8 +143,8 @@ async function request<TResponse>(
       typeof parsed === "string"
         ? parsed
         : (parsed as { message?: string; title?: string })?.message ||
-          (parsed as { message?: string; title?: string })?.title ||
-          `Request failed with status ${res.status}`;
+        (parsed as { message?: string; title?: string })?.title ||
+        `Request failed with status ${res.status}`;
     throw new ApiRequestError(res.status, message);
   }
 
@@ -165,7 +168,15 @@ export const api = {
 
   readyUp: (dto: ReadyUpDto) =>
     request<void>("POST", "/api/ship/ready", dto),
-  
+
   getGame: (gameId: string) =>
-  request<GameModel>("GET", `/api/games/${gameId}`),
+    request<GameModel>("GET", `/api/games/${gameId}`),
+  attack: (dto: AttackDto) =>
+    request<AttackResultDto>("POST", "/api/attack", dto),
+   getGameState: (gameId: string, playerId: string) =>
+    request<GameStateDto>(
+      "GET",
+      `/api/games/${gameId}/state?playerId=${encodeURIComponent(playerId)}`
+    ),
+ 
 };

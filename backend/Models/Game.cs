@@ -17,6 +17,8 @@ public class Game
 
     public Guid? CurrentTurnPlayerId { get; set; }
 
+    public Guid? WinnerId { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public User Host { get; set; } = null!;

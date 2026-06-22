@@ -13,7 +13,21 @@ import {
 } from "@/components/ui";
 import ShipPlacementGrid from "@/components/ShipPlacementGrid";
 
-export default function ReadyUpPanel({ gameId }: { gameId: string }) {
+// Key the stored fleet by gameId so switching games in the same browser
+// tab can't leak one game's ships into another's BattlePanel.
+function shipsStorageKey(gameId: string) {
+  return `battleship:ships:${gameId}`;
+}
+
+export default function ReadyUpPanel({
+  gameId,
+  onMatchStarted,
+}: {
+  gameId: string;
+  // Called once both players are ready. Parent page uses this to swap
+  // from ReadyUpPanel to BattlePanel on the same route.
+  onMatchStarted?: () => void;
+}) {
   const [userId, setUserId] = useState<string | null>(null);
   useEffect(() => {
     setUserId(window.localStorage.getItem("userId") || "");
@@ -36,9 +50,13 @@ export default function ReadyUpPanel({ gameId }: { gameId: string }) {
     const unsubscribe = onBothPlayersReady(({ gameId: incomingGameId }) => {
       if (incomingGameId !== gameId) return;
       setMatchStarted(true);
+      // Brief pause so the "Both fleets are in" message is visible before
+      // the parent swaps panels — purely cosmetic, drop if you'd rather
+      // transition instantly.
+      setTimeout(() => onMatchStarted?.(), 700);
     });
     return unsubscribe;
-  }, [gameId]);
+  }, [gameId, onMatchStarted]);
   useEffect(() => {
     let cancelled = false;
     async function load() {
@@ -82,6 +100,11 @@ export default function ReadyUpPanel({ gameId }: { gameId: string }) {
     setSuccess(null);
     try {
       await api.readyUp({ gameId, playerId: userId, ships });
+      // Stash our own placements so BattlePanel can render "Your fleet"
+      // without a refetch. sessionStorage survives the panel swap since
+      // we stay on the same route; it does NOT survive a page refresh —
+      // that needs a GET-ships-by-player endpoint if you want to support it.
+      window.sessionStorage.setItem(shipsStorageKey(gameId), JSON.stringify(ships));
       setSelfReady(true);
       setSuccess("Fleet submitted. Waiting for the other player…");
     } catch (err) {
@@ -137,7 +160,7 @@ export default function ReadyUpPanel({ gameId }: { gameId: string }) {
       </div>
       {matchStarted && (
         <p className="mb-4 rounded-md border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-300">
-          Both fleets are in. The battle begins — attack screen coming soon.
+          Both fleets are in. The battle begins…
         </p>
       )}
       <ShipPlacementGrid gridSize={game.gridSize} ships={ships} onChange={setShips} />
