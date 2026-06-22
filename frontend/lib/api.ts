@@ -17,8 +17,7 @@ export const DEFAULT_BASE_URL = "https://battleship-game-c2vj.onrender.com";
 const STORAGE_KEY = "battleship:baseUrl";
 
 export function getBaseUrl(): string {
-  if (typeof window === "undefined") return DEFAULT_BASE_URL;
-  return window.localStorage.getItem(STORAGE_KEY) || DEFAULT_BASE_URL;
+  return DEFAULT_BASE_URL;
 }
 
 export function setBaseUrl(url: string) {
@@ -173,16 +172,16 @@ export const api = {
     request<GameModel>("GET", `/api/games/${gameId}`),
   attack: (dto: AttackDto) =>
     request<AttackResultDto>("POST", "/api/attack", dto),
-   getGameState: (gameId: string, playerId: string) =>
+  getGameState: (gameId: string, playerId: string) =>
     request<GameStateDto>(
       "GET",
       `/api/games/${gameId}/state?playerId=${encodeURIComponent(playerId)}`
     ),
- 
-  getUserById  :(userId:string)=>
+
+  getUserById: (userId: string) =>
     request<UserResponseDto>(
       "GET",
       `/api/users/id/${userId}`
     )
-  
+
 };
