@@ -12,7 +12,7 @@ import type {
   GameStateDto,
 } from "@/types/api";
 
-export const DEFAULT_BASE_URL = "http://localhost:5204";
+export const DEFAULT_BASE_URL = "https://battleship-game-c2vj.onrender.com";
 
 const STORAGE_KEY = "battleship:baseUrl";
 
