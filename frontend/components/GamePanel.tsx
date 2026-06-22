@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { api, ApiRequestError } from "@/lib/api";
 import { useSessionGames } from "@/lib/session";
 import { joinGameGroup, onPlayerJoined } from "@/lib/gameHub";
-import { GAME_STATUS_LABELS, type GameModel } from "@/types/api";
+import { GAME_STATUS_LABELS, UserResponseDto, type GameModel } from "@/types/api";
 import {
   Panel,
   PrimaryButton,
@@ -43,10 +43,9 @@ function StatusPill({ label }: { label: string }) {
   return (
     <span
       className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-medium
-        ${
-          isActive
-            ? "border border-cyan-500/20 bg-cyan-500/10 text-cyan-300"
-            : "border border-slate-700/50 bg-slate-800 text-slate-400"
+        ${isActive
+          ? "border border-cyan-500/20 bg-cyan-500/10 text-cyan-300"
+          : "border border-slate-700/50 bg-slate-800 text-slate-400"
         }`}
     >
       {isActive && <LiveDot />}
@@ -90,13 +89,20 @@ export default function GamePanel() {
   const { games, upsertGame } = useSessionGames();
   const { showToast, ToastElement } = useToast();
 
-  const [userId, setUserId] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string>("");
   const [displayName, setDisplayName] = useState<string>("");
 
+  async function GetUser(userId: string) {
+    let user: UserResponseDto = await api.getUserById(userId)
+    setDisplayName(user.displayName)
+  }
   useEffect(() => {
     setUserId(window.localStorage.getItem("userId") || "");
-    setDisplayName(window.localStorage.getItem("displayName") || "You");
-  }, []);
+    if(userId){
+      GetUser(userId)
+    }
+
+  }, [userId,setUserId]);
 
   const [createLoading, setCreateLoading] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
@@ -215,7 +221,7 @@ export default function GamePanel() {
 
             <Divider />
 
-    
+
             <div className="flex items-center justify-between rounded-lg border border-slate-700/40 bg-slate-950/40 px-3 py-2.5">
               <div>
                 <p className="text-xs font-medium text-slate-300">Grid size</p>
@@ -236,7 +242,7 @@ export default function GamePanel() {
             <ErrorText message={createError} />
           </div>
 
-    
+
           <div className="flex flex-col gap-3 rounded-xl border border-slate-700/60 bg-slate-900/50 p-4">
             <div className="flex items-center justify-between">
               <SectionLabel>Open games</SectionLabel>
@@ -289,10 +295,9 @@ export default function GamePanel() {
                   <div
                     key={g.id}
                     className={`flex items-center justify-between gap-3 rounded-lg border px-3 py-2.5 transition-colors
-                      ${
-                        isOwnGame
-                          ? "border-cyan-500/20 bg-cyan-500/5"
-                          : "border-slate-700/50 bg-slate-950/40 hover:border-slate-600/70"
+                      ${isOwnGame
+                        ? "border-cyan-500/20 bg-cyan-500/5"
+                        : "border-slate-700/50 bg-slate-950/40 hover:border-slate-600/70"
                       }`}
                   >
                     <div className="flex min-w-0 items-center gap-2.5">

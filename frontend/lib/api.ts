@@ -179,4 +179,10 @@ export const api = {
       `/api/games/${gameId}/state?playerId=${encodeURIComponent(playerId)}`
     ),
  
+  getUserById  :(userId:string)=>
+    request<UserResponseDto>(
+      "GET",
+      `/api/users/id/${userId}`
+    )
+  
 };

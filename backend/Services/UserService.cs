@@ -1,3 +1,4 @@
+using System.Xml;
 using backend.Data;
 using backend.Models;
 using backend.Services.Interfaces;
@@ -17,4 +18,10 @@ public class UserService(ApplicationDbContext _db) : IUserService
     await _db.SaveChangesAsync();
     return user;
 }
+
+public async Task<User> GetUserByID(Guid userId)
+    {
+        var user = await _db.Users.FindAsync(userId);
+        return user;
+    }
 }

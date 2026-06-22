@@ -1,3 +1,4 @@
+using System.Xml;
 using backend.Dtos;
 using backend.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
@@ -14,7 +15,13 @@ public class UserController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Create(CreateUserDto dto)
     {
-        var user =await _userService.CreateUserAsync(dto.Name);
-        return Ok(new UserResponseDto(user.Id,user.DisplayName));
+        var user = await _userService.CreateUserAsync(dto.Name);
+        return Ok(new UserResponseDto(user.Id, user.DisplayName));
+    }
+    [HttpGet("id/{id}")]
+    public async Task<IActionResult> GetUserById(Guid id)
+    {
+        var user = await _userService.GetUserByID(id);
+        return Ok(user);
     }
 }
