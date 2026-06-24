@@ -24,4 +24,6 @@ public class Game
     public User Host { get; set; } = null!;
 
     public User? Opponent { get; set; }
+    public bool HostConnected { get; set; } = true;
+    public bool OpponentConnected { get; set; } = true;
 }

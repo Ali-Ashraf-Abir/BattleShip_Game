@@ -13,6 +13,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<MatchHistory> MatchHistories => Set<MatchHistory>();
     public DbSet<Ship> Ships => Set<Ship>();
     public DbSet<Attack> Attacks => Set<Attack>();
+    public DbSet<ConnectionMapping> ConnectionMappings { get; set; }
     protected override void OnModelCreating(
     ModelBuilder builder)
     {

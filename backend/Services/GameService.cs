@@ -107,5 +107,49 @@ public class GameService(ApplicationDbContext _db, GameStateManager _gameStateMa
             .Include(g => g.Opponent)
             .FirstOrDefaultAsync(g => g.Id == gameId);
     }
+    public async Task LeaveGameAsync(Guid gameId, Guid playerId)
+    {
+        var game = await _db.Games.FindAsync(gameId);
+        if (game == null) return;
 
+        bool isHost = game.HostId == playerId;
+        bool isOpponent = game.OpponentId == playerId;
+
+        if (!isHost && !isOpponent) return;
+
+        if (isHost)
+            game.HostConnected = false;
+        else
+            game.OpponentConnected = false;
+
+        if (!game.HostConnected && !game.OpponentConnected)
+        {
+            await DeleteGameAsync(gameId);
+        }
+        else
+        {
+            await _db.SaveChangesAsync();
+        }
+    }
+
+    public async Task DeleteGameAsync(Guid gameId)
+    {
+        var ships = await _db.Ships
+            .Where(s => s.GameId == gameId)
+            .ToListAsync();
+        _db.Ships.RemoveRange(ships);
+
+        var attacks = await _db.Attacks
+            .Where(a => a.GameId == gameId)
+            .ToListAsync();
+        _db.Attacks.RemoveRange(attacks);
+
+        var game = await _db.Games.FindAsync(gameId);
+        if (game != null)
+            _db.Games.Remove(game);
+
+        _gameStateManager.RemoveGame(gameId);
+
+        await _db.SaveChangesAsync();
+    }
 }

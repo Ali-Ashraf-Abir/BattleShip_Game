@@ -8,4 +8,6 @@ public interface IGameService
 
     public Task<List<Game>> AvailableGames();
     public  Task<Game?> GetGameAsync(Guid gameId);
+    Task LeaveGameAsync(Guid gameId, Guid playerId);
+    Task DeleteGameAsync(Guid gameId);
 }
