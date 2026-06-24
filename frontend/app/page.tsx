@@ -12,7 +12,7 @@ export default function Home() {
         <header className="flex flex-col gap-1">
           <div className="flex items-center gap-2">
             <h1 className="text-lg font-semibold tracking-tight text-slate-100">
-              Battleship API Console
+              Battleship
             </h1>
           </div>
 
