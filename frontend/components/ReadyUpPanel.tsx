@@ -13,8 +13,6 @@ import {
 } from "@/components/ui";
 import ShipPlacementGrid from "@/components/ShipPlacementGrid";
 
-// Key the stored fleet by gameId so switching games in the same browser
-// tab can't leak one game's ships into another's BattlePanel.
 function shipsStorageKey(gameId: string) {
   return `battleship:ships:${gameId}`;
 }
@@ -24,8 +22,7 @@ export default function ReadyUpPanel({
   onMatchStarted,
 }: {
   gameId: string;
-  // Called once both players are ready. Parent page uses this to swap
-  // from ReadyUpPanel to BattlePanel on the same route.
+
   onMatchStarted?: () => void;
 }) {
   const [userId, setUserId] = useState<string | null>(null);
@@ -50,9 +47,7 @@ export default function ReadyUpPanel({
     const unsubscribe = onBothPlayersReady(({ gameId: incomingGameId }) => {
       if (incomingGameId !== gameId) return;
       setMatchStarted(true);
-      // Brief pause so the "Both fleets are in" message is visible before
-      // the parent swaps panels — purely cosmetic, drop if you'd rather
-      // transition instantly.
+
       setTimeout(() => onMatchStarted?.(), 700);
     });
     return unsubscribe;
@@ -100,10 +95,6 @@ export default function ReadyUpPanel({
     setSuccess(null);
     try {
       await api.readyUp({ gameId, playerId: userId, ships });
-      // Stash our own placements so BattlePanel can render "Your fleet"
-      // without a refetch. sessionStorage survives the panel swap since
-      // we stay on the same route; it does NOT survive a page refresh —
-      // that needs a GET-ships-by-player endpoint if you want to support it.
       window.sessionStorage.setItem(shipsStorageKey(gameId), JSON.stringify(ships));
       setSelfReady(true);
       setSuccess("Fleet submitted. Waiting for the other player…");
@@ -163,19 +154,24 @@ export default function ReadyUpPanel({
           Both fleets are in. The battle begins…
         </p>
       )}
-      <ShipPlacementGrid gridSize={game.gridSize} ships={ships} onChange={setShips} />
 
-      <div className="mt-4 flex items-center gap-3">
-        <PrimaryButton
-          onClick={handleSubmit}
-          loading={loading}
-          disabled={!fleetComplete || selfReady}
-        >
-          {selfReady ? "Fleet submitted" : "Submit fleet (ready up)"}
-        </PrimaryButton>
-        <span className="text-xs text-slate-500">
-          {ships.length}/5 ships placed
-        </span>
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
+        <div className="min-w-0 flex-1">
+          <ShipPlacementGrid gridSize={game.gridSize} ships={ships} onChange={setShips} />
+        </div>
+
+        <div className="flex items-center gap-3 lg:flex-col lg:items-stretch lg:gap-2 lg:pt-5 lg:w-48 lg:shrink-0">
+          <PrimaryButton
+            onClick={handleSubmit}
+            loading={loading}
+            disabled={!fleetComplete || selfReady}
+          >
+            {selfReady ? "Fleet submitted" : "Submit fleet (ready up)"}
+          </PrimaryButton>
+          <span className="text-xs text-slate-500 lg:text-center">
+            {ships.length}/5 ships placed
+          </span>
+        </div>
       </div>
 
       <ErrorText message={error} />

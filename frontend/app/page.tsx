@@ -22,12 +22,11 @@ export default function Home() {
           </p>
         </header>
 
-        <ApiBaseBar />
+
         <SharedDatalists />
 
         <UserPanel />
  
-        <RequestLogPanel />
 
         <footer className="pb-6 text-center text-xs text-slate-600">
           No attack / fire endpoint exists on the backend yet — once one is added,

@@ -15,13 +15,33 @@ public class GameService(ApplicationDbContext _db, GameStateManager _gameStateMa
 {
     public async Task<Game> CreateGameAsync(Guid hostId, int gridSize)
     {
+        var existingGames = await _db.Games
+            .Where(g => g.HostId == hostId && g.Status == GameStatus.WaitingForPlayer)
+            .ToListAsync();
+
+        if (existingGames.Any())
+        {
+            var existingGameIds = existingGames.Select(g => g.Id).ToList();
+
+            var ships = await _db.Ships
+                .Where(s => existingGameIds.Contains(s.GameId))
+                .ToListAsync();
+            _db.Ships.RemoveRange(ships);
+
+            var attacks = await _db.Attacks
+                .Where(a => existingGameIds.Contains(a.GameId))
+                .ToListAsync();
+            _db.Attacks.RemoveRange(attacks);
+
+            _db.Games.RemoveRange(existingGames);
+            await _db.SaveChangesAsync();
+        }
 
         var game = new Game
         {
             HostId = hostId,
             GridSize = gridSize,
             Status = GameStatus.WaitingForPlayer,
-
         };
         _db.Games.Add(game);
         await _db.SaveChangesAsync();

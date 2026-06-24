@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { api, ApiRequestError } from "@/lib/api";
 import {
   joinGameGroup,
@@ -21,16 +21,11 @@ import { Panel, ErrorText, SuccessText } from "@/components/ui";
 import AttackGrid from "@/components/AttackGrid";
 import OwnFleetGrid from "@/components/OwnFleetGrid";
 
-// AttackResult/ShipSunk SignalR payloads carry shipType as the same
-// ShipTypeName string form confirmed from the REST API ("Carrier", etc.) —
-// convert with shipTypeFromApi, same as for ShipDto/OpponentShipSummaryDto.
 function normalizeShipType(value: ShipTypeName | null): ShipType | null {
   if (value === null) return null;
   const resolved = shipTypeFromApi(value);
   if (resolved === undefined) {
-    // Genuinely unexpected payload (wrong enum config on some new endpoint,
-    // a typo, etc.) — fail loudly in dev instead of silently rendering
-    // "undefined was sunk!" with no trace of why.
+
     console.error(`Unrecognized ship type from server: ${JSON.stringify(value)}`);
     return null;
   }
@@ -50,14 +45,12 @@ export default function BattlePanel({
 }: {
   gameId: string;
   gridSize: number;
-  // Full detail — these are always the requesting player's own ships.
   myShips: ShipDto[];
-  // Position-free — count + sunk status only, never coordinates.
+
   opponentShipSummary: OpponentShipSummaryDto[];
   initialAttacks: AttackLogDto[];
   initialCurrentTurnPlayerId: string | null;
-  // Called when GameOver fires, so the parent page can re-fetch state
-  // and swap to the game-over screen (also updates Wins/Losses there).
+
   onGameOver: () => void;
 }) {
   const [userId, setUserId] = useState<string | null>(null);
@@ -65,9 +58,7 @@ export default function BattlePanel({
     setUserId(window.localStorage.getItem("userId") || "");
   }, []);
 
-  // Seed both grids from attack history so a freshly-loaded battle screen
-  // (e.g. after a refresh) shows everything that already happened, not
-  // just events that occur from this point forward.
+
   const initialMyShots = useMemo(() => {
     const map = new Map<string, CellState>();
     if (!userId) return map;
@@ -97,18 +88,13 @@ export default function BattlePanel({
   const [incomingHits, setIncomingHits] = useState<Set<string>>(new Set());
   const [incomingMisses, setIncomingMisses] = useState<Set<string>>(new Set());
 
-  // Apply the seeded history once userId is known (it's read from
-  // localStorage asynchronously on mount).
+
   useEffect(() => {
     if (!userId) return;
     setMyShots(initialMyShots);
     setIncomingHits(initialIncoming.hits);
     setIncomingMisses(initialIncoming.misses);
-    // Only re-seed if the underlying history actually changes (e.g. a
-    // fresh page load passes a new initialAttacks array). Intentionally
-    // not depending on the memoized objects themselves to avoid re-seeding
-    // on every render.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, [userId, gameId]);
 
   const [currentTurnPlayerId, setCurrentTurnPlayerId] = useState<string | null>(
@@ -194,8 +180,7 @@ export default function BattlePanel({
   useEffect(() => {
     const unsubscribe = onGameOverEvent((payload) => {
       if (payload.gameId !== gameId) return;
-      // Don't try to render a result locally — re-fetch authoritative
-      // state (this is also when Wins/Losses/MatchHistory become visible).
+
       onGameOver();
     });
     return unsubscribe;
@@ -207,8 +192,7 @@ export default function BattlePanel({
     setError(null);
     try {
       await api.attack({ gameId, attackerId: userId, x, y });
-      // Result arrives via SignalR (above), not the HTTP response, so
-      // both players' screens update identically.
+
     } catch (err) {
       setError(err instanceof ApiRequestError ? err.message : "Unexpected error");
     } finally {
@@ -229,17 +213,21 @@ export default function BattlePanel({
   return (
     <Panel title="Battle" step="04">
       <div
-        className={`mb-4 rounded-md border px-3 py-2 text-xs ${
-          isMyTurn
-            ? "border-amber-500/30 bg-amber-500/10 text-amber-300"
-            : "border-slate-700 bg-slate-950/40 text-slate-400"
-        }`}
+        className={`mb-3 rounded-md border px-3 py-2 text-xs ${isMyTurn
+          ? "border-amber-500/30 bg-amber-500/10 text-amber-300"
+          : "border-slate-700 bg-slate-950/40 text-slate-400"
+          }`}
       >
         {isMyTurn ? "Your turn — fire at the opponent's grid." : "Waiting for opponent's move…"}
       </div>
 
-      <div className="grid gap-6 sm:grid-cols-2">
-        <div className="flex flex-col gap-2">
+      <div
+        className="grid gap-6 sm:grid-cols-2 items-start justify-start"
+        style={{
+          "--board-size": "min(90vw, 480px)",
+        } as CSSProperties}
+      >
+        <div className="flex flex-col gap-2 mt-8 ">
           <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
             Opponent&apos;s waters
           </p>
@@ -255,11 +243,10 @@ export default function BattlePanel({
               return (
                 <li
                   key={s.shipType}
-                  className={`rounded-full px-2 py-0.5 text-[11px] ${
-                    sunkOpponentTypes.has(type)
-                      ? "bg-rose-500/20 text-rose-300 line-through"
-                      : "bg-slate-800 text-slate-400"
-                  }`}
+                  className={`rounded-full px-2 py-0.5 text-[11px] ${sunkOpponentTypes.has(type)
+                    ? "bg-rose-500/20 text-rose-300 line-through"
+                    : "bg-slate-800 text-slate-400"
+                    }`}
                 >
                   {SHIP_LABELS[type]}
                 </li>
