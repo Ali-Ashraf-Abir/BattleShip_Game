@@ -28,10 +28,7 @@ export default function Home() {
         <UserPanel />
  
 
-        <footer className="pb-6 text-center text-xs text-slate-600">
-          No attack / fire endpoint exists on the backend yet — once one is added,
-          a panel for it can be wired in the same way as the others.
-        </footer>
+      
       </div>
     </main>
   );

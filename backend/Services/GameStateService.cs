@@ -41,14 +41,6 @@ public class GameStateService(ApplicationDbContext _db) : IGameStateService
         var attacks = await _db.Attacks
             .Where(a => a.GameId == gameId)
             .ToListAsync();
-        // Note: no ordering applied — Attack has no CreatedAt/sequence column,
-        // and Guid.Id ordering is NOT chronological. Fine for the frontend's
-        // current use (marking which cells were hit/missed), but if you ever
-        // need attack order (e.g. animating the battle), add a CreatedAt
-        // column to Attack and order by that instead.
-
-        // Cells *I* have hit on the opponent's board, used to compute which
-        // of their ships are sunk without ever exposing their coordinates.
         var myHitCells = attacks
             .Where(a => a.AttackerId == requestingPlayerId && a.IsHit)
             .Select(a => (a.X, a.Y))
