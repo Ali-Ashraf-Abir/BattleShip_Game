@@ -31,11 +31,13 @@ export async function ensureHubStarted(): Promise<signalR.HubConnection> {
   return conn;
 }
 
-export async function joinGameGroup(gameId: string): Promise<void> {
+export async function joinGameGroup(
+  gameId: string,
+  playerId: string
+): Promise<void> {
   const conn = await ensureHubStarted();
-  await conn.invoke("JoinGameGroup", gameId);
+  await conn.invoke("JoinGameGroup", gameId, playerId);
 }
-
 export async function leaveGameGroup(gameId: string): Promise<void> {
   const conn = getConnection();
   if (conn.state === signalR.HubConnectionState.Connected) {
@@ -74,13 +76,13 @@ export type AttackResultPayload = {
   winnerId: string | null;
   nextTurnPlayerId: string;
 };
- 
+
 export type ShipSunkPayload = {
   gameId: string;
   defenderId: string;
   shipType: ShipTypeName; // was: number | string
 };
- 
+
 export function onAttackResult(
   handler: (payload: AttackResultPayload) => void
 ): () => void {
@@ -88,9 +90,9 @@ export function onAttackResult(
   conn.on("AttackResult", handler);
   return () => conn.off("AttackResult", handler);
 }
- 
 
- 
+
+
 export function onShipSunk(
   handler: (payload: ShipSunkPayload) => void
 ): () => void {
@@ -98,13 +100,13 @@ export function onShipSunk(
   conn.on("ShipSunk", handler);
   return () => conn.off("ShipSunk", handler);
 }
- 
+
 export type GameOverPayload = {
   gameId: string;
   winnerId: string;
   loserId: string;
 };
- 
+
 export function onGameOver(
   handler: (payload: GameOverPayload) => void
 ): () => void {

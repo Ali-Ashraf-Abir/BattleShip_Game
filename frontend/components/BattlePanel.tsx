@@ -114,7 +114,10 @@ export default function BattlePanel({
   const [hubJoinError, setHubJoinError] = useState<string | null>(null);
   useEffect(() => {
     let cancelled = false;
-    joinGameGroup(gameId).catch((err) => {
+    if(!userId){
+      return;
+    }
+    joinGameGroup(gameId,userId).catch((err) => {
       if (!cancelled) {
         setHubJoinError(
           err instanceof Error
@@ -126,7 +129,7 @@ export default function BattlePanel({
     return () => {
       cancelled = true;
     };
-  }, [gameId]);
+  }, [gameId,userId]);
 
   useEffect(() => {
     const unsubscribe = onAttackResult((payload: AttackResultPayload) => {

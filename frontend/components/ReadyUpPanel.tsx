@@ -54,14 +54,18 @@ export default function ReadyUpPanel({
   }, [gameId, onMatchStarted]);
   useEffect(() => {
     let cancelled = false;
+
     async function load() {
       setGameLoading(true);
       setGameError(null);
+      if (!userId) {
+        return 0;
+      }
       try {
         const g = await api.getGame(gameId);
         if (cancelled) return;
         setGame(g);
-        await joinGameGroup(gameId);
+        await joinGameGroup(gameId, userId);
       } catch (err) {
         if (!cancelled) {
           setGameError(err instanceof ApiRequestError ? err.message : "Unexpected error");
@@ -74,7 +78,7 @@ export default function ReadyUpPanel({
     return () => {
       cancelled = true;
     };
-  }, [gameId]);
+  }, [gameId,userId]);
 
   useEffect(() => {
     const unsubscribe = onPlayerReady(({ gameId: incomingGameId, playerId }) => {

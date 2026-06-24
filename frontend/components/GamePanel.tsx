@@ -98,11 +98,11 @@ export default function GamePanel() {
   }
   useEffect(() => {
     setUserId(window.localStorage.getItem("userId") || "");
-    if(userId){
+    if (userId) {
       GetUser(userId)
     }
 
-  }, [userId,setUserId]);
+  }, [userId, setUserId]);
 
   const [createLoading, setCreateLoading] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
@@ -153,186 +153,192 @@ export default function GamePanel() {
     try {
       const game = await api.createGame({ hostId: userId, gridSize: GRID_SIZE });
       upsertGame(game);
-      await joinGameGroup(game.id);
+      await joinGameGroup(game.id,userId);
       loadAvailableGames();
-    } catch (err) {
-      setCreateError(
-        err instanceof ApiRequestError ? err.message : "Unexpected error"
-      );
-    } finally {
-      setCreateLoading(false);
     }
+    catch (err) {
+      console.error("Create game error:", err);
+
+      if (err instanceof Error) {
+        setCreateError(err.message);
+      } else {
+        setCreateError(JSON.stringify(err));
+      }
+    
+  } finally {
+    setCreateLoading(false);
   }
+}
 
-  async function handleJoin(gameId: string) {
-    if (!userId) {
-      setJoinError("No user found. Create a user first.");
-      return;
-    }
-    setJoiningGameId(gameId);
-    setJoinError(null);
-    try {
-      const game = await api.joinGame({ playerId: userId, gameId });
-      upsertGame(game);
-      await joinGameGroup(game.id);
-      showToast("Joined! Heading to the board…");
-      setTimeout(() => router.push(`/game/${game.id}`), 600);
-    } catch (err) {
-      setJoinError(
-        err instanceof ApiRequestError ? err.message : "Unexpected error"
-      );
-      setJoiningGameId(null);
-    }
+async function handleJoin(gameId: string) {
+  if (!userId) {
+    setJoinError("No user found. Create a user first.");
+    return;
   }
+  setJoiningGameId(gameId);
+  setJoinError(null);
+  try {
+    const game = await api.joinGame({ playerId: userId, gameId });
+    upsertGame(game);
+    await joinGameGroup(game.id,userId);
+    showToast("Joined! Heading to the board…");
+    setTimeout(() => router.push(`/game/${game.id}`), 600);
+  } catch (err) {
+    setJoinError(
+      err instanceof ApiRequestError ? err.message : "Unexpected error"
+    );
+    setJoiningGameId(null);
+  }
+}
 
-  return (
-    <Panel title="Lobby" step="02">
-      <div className="flex flex-col gap-6">
-
-
-        <div className="flex items-center gap-3">
-          <SonarIcon />
-          <div>
-            <p className="text-base font-semibold text-slate-100">Battle Lobby</p>
-            <p className="text-xs text-slate-500">
-              Host a game or join an open one — all matches are 10×10.
-            </p>
-          </div>
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-
-          <div className="flex flex-col gap-4 rounded-xl border border-slate-700/60 bg-slate-900/50 p-4">
-            <SectionLabel>Host a new game</SectionLabel>
-
-            <div className="flex items-center gap-3 rounded-lg bg-slate-800/60 px-3 py-2.5">
-              {displayName ? (
-                <PlayerAvatar name={displayName} />
-              ) : (
-                <div className="h-9 w-9 shrink-0 rounded-full bg-slate-700/60" />
-              )}
-              <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-slate-100">
-                  {displayName || "Loading…"}
-                </p>
-                <p className="text-[11px] text-slate-500">Playing as you</p>
-              </div>
-            </div>
-
-            <Divider />
+return (
+  <Panel title="Lobby" step="02">
+    <div className="flex flex-col gap-6">
 
 
-            <div className="flex items-center justify-between rounded-lg border border-slate-700/40 bg-slate-950/40 px-3 py-2.5">
-              <div>
-                <p className="text-xs font-medium text-slate-300">Grid size</p>
-                <p className="text-[11px] text-slate-500">Standard — balanced play</p>
-              </div>
-              <span className="rounded-md border border-slate-700 bg-slate-900 px-3 py-1 text-sm font-semibold tabular-nums text-cyan-300">
-                10×10
-              </span>
-            </div>
-
-            <PrimaryButton
-              onClick={handleCreate}
-              loading={createLoading}
-              disabled={!userId}
-            >
-              Deploy fleet
-            </PrimaryButton>
-            <ErrorText message={createError} />
-          </div>
-
-
-          <div className="flex flex-col gap-3 rounded-xl border border-slate-700/60 bg-slate-900/50 p-4">
-            <div className="flex items-center justify-between">
-              <SectionLabel>Open games</SectionLabel>
-              <button
-                onClick={loadAvailableGames}
-                disabled={availableLoading}
-                className="flex items-center gap-1 rounded-md px-2 py-1 text-[10px] text-slate-500
-                  transition-colors hover:bg-slate-800 hover:text-cyan-400 disabled:opacity-40"
-              >
-                {availableLoading ? (
-                  <svg className="h-3 w-3 animate-spin" viewBox="0 0 24 24" fill="none">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4z" />
-                  </svg>
-                ) : (
-                  <svg className="h-3 w-3" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8">
-                    <path d="M13.5 8A5.5 5.5 0 1 1 8 2.5" strokeLinecap="round" />
-                    <polyline points="11,1 13.5,2.5 12,5" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                )}
-                Refresh
-              </button>
-            </div>
-
-            <ErrorText message={availableError} />
-            <ErrorText message={joinError} />
-
-            <div className="flex min-h-[8rem] flex-col gap-2">
-              {availableLoading && (
-                <div className="flex flex-1 items-center justify-center py-8">
-                  <svg className="h-5 w-5 animate-spin text-slate-600" viewBox="0 0 24 24" fill="none">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4z" />
-                  </svg>
-                </div>
-              )}
-
-              {!availableLoading && availableGames.length === 0 && !availableError && (
-                <div className="flex flex-1 flex-col items-center justify-center gap-2 py-8 text-center">
-                  <span className="text-2xl">⚓</span>
-                  <p className="text-xs font-medium text-slate-400">No open games right now.</p>
-                  <p className="text-[11px] text-slate-600">Host one and wait for a challenger.</p>
-                </div>
-              )}
-
-              {availableGames.map((g) => {
-                const isOwnGame = g.hostId === userId;
-                const hostName = g.host?.displayName ?? "Unknown";
-                return (
-                  <div
-                    key={g.id}
-                    className={`flex items-center justify-between gap-3 rounded-lg border px-3 py-2.5 transition-colors
-                      ${isOwnGame
-                        ? "border-cyan-500/20 bg-cyan-500/5"
-                        : "border-slate-700/50 bg-slate-950/40 hover:border-slate-600/70"
-                      }`}
-                  >
-                    <div className="flex min-w-0 items-center gap-2.5">
-                      <PlayerAvatar name={hostName} />
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          {isOwnGame && (
-                            <span className="shrink-0 rounded border border-cyan-500/20 bg-cyan-500/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-cyan-400">
-                              Yours
-                            </span>
-                          )}
-                          <p className="truncate text-sm font-semibold text-slate-100">
-                            {hostName}
-                          </p>
-                        </div>
-                        <p className="text-[11px] text-slate-500">10×10 grid</p>
-                      </div>
-                    </div>
-
-                    <PrimaryButton
-                      onClick={() => handleJoin(g.id)}
-                      loading={joiningGameId === g.id}
-                      disabled={!userId || isOwnGame}
-                    >
-                      {isOwnGame ? "Waiting…" : "Join"}
-                    </PrimaryButton>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+      <div className="flex items-center gap-3">
+        <SonarIcon />
+        <div>
+          <p className="text-base font-semibold text-slate-100">Battle Lobby</p>
+          <p className="text-xs text-slate-500">
+            Host a game or join an open one — all matches are 10×10.
+          </p>
         </div>
       </div>
 
-      {ToastElement}
-    </Panel>
-  );
+      <div className="grid gap-4 sm:grid-cols-2">
+
+        <div className="flex flex-col gap-4 rounded-xl border border-slate-700/60 bg-slate-900/50 p-4">
+          <SectionLabel>Host a new game</SectionLabel>
+
+          <div className="flex items-center gap-3 rounded-lg bg-slate-800/60 px-3 py-2.5">
+            {displayName ? (
+              <PlayerAvatar name={displayName} />
+            ) : (
+              <div className="h-9 w-9 shrink-0 rounded-full bg-slate-700/60" />
+            )}
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold text-slate-100">
+                {displayName || "Loading…"}
+              </p>
+              <p className="text-[11px] text-slate-500">Playing as you</p>
+            </div>
+          </div>
+
+          <Divider />
+
+
+          <div className="flex items-center justify-between rounded-lg border border-slate-700/40 bg-slate-950/40 px-3 py-2.5">
+            <div>
+              <p className="text-xs font-medium text-slate-300">Grid size</p>
+              <p className="text-[11px] text-slate-500">Standard — balanced play</p>
+            </div>
+            <span className="rounded-md border border-slate-700 bg-slate-900 px-3 py-1 text-sm font-semibold tabular-nums text-cyan-300">
+              10×10
+            </span>
+          </div>
+
+          <PrimaryButton
+            onClick={handleCreate}
+            loading={createLoading}
+            disabled={!userId}
+          >
+            Deploy fleet
+          </PrimaryButton>
+          <ErrorText message={createError} />
+        </div>
+
+
+        <div className="flex flex-col gap-3 rounded-xl border border-slate-700/60 bg-slate-900/50 p-4">
+          <div className="flex items-center justify-between">
+            <SectionLabel>Open games</SectionLabel>
+            <button
+              onClick={loadAvailableGames}
+              disabled={availableLoading}
+              className="flex items-center gap-1 rounded-md px-2 py-1 text-[10px] text-slate-500
+                  transition-colors hover:bg-slate-800 hover:text-cyan-400 disabled:opacity-40"
+            >
+              {availableLoading ? (
+                <svg className="h-3 w-3 animate-spin" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4z" />
+                </svg>
+              ) : (
+                <svg className="h-3 w-3" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8">
+                  <path d="M13.5 8A5.5 5.5 0 1 1 8 2.5" strokeLinecap="round" />
+                  <polyline points="11,1 13.5,2.5 12,5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              )}
+              Refresh
+            </button>
+          </div>
+
+          <ErrorText message={availableError} />
+          <ErrorText message={joinError} />
+
+          <div className="flex min-h-[8rem] flex-col gap-2">
+            {availableLoading && (
+              <div className="flex flex-1 items-center justify-center py-8">
+                <svg className="h-5 w-5 animate-spin text-slate-600" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4z" />
+                </svg>
+              </div>
+            )}
+
+            {!availableLoading && availableGames.length === 0 && !availableError && (
+              <div className="flex flex-1 flex-col items-center justify-center gap-2 py-8 text-center">
+                <span className="text-2xl">⚓</span>
+                <p className="text-xs font-medium text-slate-400">No open games right now.</p>
+                <p className="text-[11px] text-slate-600">Host one and wait for a challenger.</p>
+              </div>
+            )}
+
+            {availableGames.map((g) => {
+              const isOwnGame = g.hostId === userId;
+              const hostName = g.host?.displayName ?? "Unknown";
+              return (
+                <div
+                  key={g.id}
+                  className={`flex items-center justify-between gap-3 rounded-lg border px-3 py-2.5 transition-colors
+                      ${isOwnGame
+                      ? "border-cyan-500/20 bg-cyan-500/5"
+                      : "border-slate-700/50 bg-slate-950/40 hover:border-slate-600/70"
+                    }`}
+                >
+                  <div className="flex min-w-0 items-center gap-2.5">
+                    <PlayerAvatar name={hostName} />
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        {isOwnGame && (
+                          <span className="shrink-0 rounded border border-cyan-500/20 bg-cyan-500/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-cyan-400">
+                            Yours
+                          </span>
+                        )}
+                        <p className="truncate text-sm font-semibold text-slate-100">
+                          {hostName}
+                        </p>
+                      </div>
+                      <p className="text-[11px] text-slate-500">10×10 grid</p>
+                    </div>
+                  </div>
+
+                  <PrimaryButton
+                    onClick={() => handleJoin(g.id)}
+                    loading={joiningGameId === g.id}
+                    disabled={!userId || isOwnGame}
+                  >
+                    {isOwnGame ? "Waiting…" : "Join"}
+                  </PrimaryButton>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {ToastElement}
+  </Panel>
+);
 }

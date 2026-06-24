@@ -36,7 +36,6 @@ public class GameHub(IGameService _gameService, ApplicationDbContext _db) : Hub
     {
         await Groups.AddToGroupAsync(Context.ConnectionId, gameId.ToString());
 
-        // Track which player owns this connection
         _db.ConnectionMappings.Add(new ConnectionMapping
         {
             ConnectionId = Context.ConnectionId,
