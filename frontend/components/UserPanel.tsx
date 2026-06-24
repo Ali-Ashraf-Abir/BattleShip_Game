@@ -74,32 +74,7 @@ export default function UserPanel() {
 
       <ErrorText message={error} />
 
-      {users.length > 0 && (
-        <div className="mt-4">
-          <div className="mb-2 flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-400">
-              Players this session
-            </span>
-            <button
-              onClick={clearUsers}
-              className="text-xs text-slate-500 hover:text-amber-400"
-            >
-              Clear
-            </button>
-          </div>
-          <ul className="flex flex-col gap-1.5">
-            {users.map((u) => (
-              <li
-                key={u.id}
-                className="flex items-center justify-between rounded-md bg-slate-950/50 px-3 py-1.5"
-              >
-                <span className="text-sm text-slate-200">{u.displayName}</span>
-                <CopyableId value={u.id} label="id" />
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+
     </Panel>
   );
 }

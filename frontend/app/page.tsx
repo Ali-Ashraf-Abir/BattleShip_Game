@@ -11,15 +11,11 @@ export default function Home() {
       <div className="mx-auto flex max-w-5xl flex-col gap-6">
         <header className="flex flex-col gap-1">
           <div className="flex items-center gap-2">
-            <span className="text-2xl">🚢</span>
             <h1 className="text-lg font-semibold tracking-tight text-slate-100">
               Battleship API Console
             </h1>
           </div>
-          <p className="text-sm text-slate-500">
-            A test harness for the Battleship backend — create players, stand up
-            games, place fleets, and watch every request go out.
-          </p>
+
         </header>
 
 
