@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Battleship API Console",
-  description: "A local test harness for the Battleship game backend",
+  title: "Battleship ",
+  description: "A simple battleship online multiplayer game",
 };
 
 export default function RootLayout({
